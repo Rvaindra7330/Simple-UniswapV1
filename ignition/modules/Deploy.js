@@ -1,30 +1,14 @@
-const hre = require("hardhat");
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
-async function main() {
-  const TokenA = await hre.ethers.getContractFactory("TokenA");
-  const tokenA = await TokenA.deploy();
-  await tokenA.waitForDeployment();
-  console.log("TokenA:", tokenA.target);
+module.exports = buildModule("UniswapCloneModule", (m) => {
 
-  const TokenB = await hre.ethers.getContractFactory("TokenB");
-  const tokenB = await TokenB.deploy();
-  await tokenB.waitForDeployment();
-  console.log("TokenB:", tokenB.target);
+  const tokenA = m.contract("TokenA");
+  const tokenB = m.contract("TokenB");
 
-  const Factory = await hre.ethers.getContractFactory("Factory");
-  const factory = await Factory.deploy();
-  await factory.waitForDeployment();
-  console.log("Factory:", factory.target);
+  const factory = m.contract("Factory");
 
-  // Create a Pair
-  const tx = await factory.createPair(tokenA.target, tokenB.target);
-  await tx.wait();
+  // create a pair using call()
+  m.call(factory, "createPair", [tokenA, tokenB]);
 
-  const pairAddress = await factory.getPair(tokenA.target, tokenB.target);
-  console.log("Pair Address:", pairAddress);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+  return { tokenA, tokenB, factory };
 });
